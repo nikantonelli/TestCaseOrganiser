@@ -7,19 +7,30 @@ Ext.define('CustomApp', {
     items:[
         {
             xtype: 'container',
-            id: 'folderbox'
+            id: 'folderbox',
+            items: [{
+                xtype: 'label',
+                html: '<b> Test Folder Hierarchy </b>'
+            }]
 
         },
         {
             xtype: 'container',
             id: 'casebox',
-            flex: 2
+            flex: 2,
+            items: [{
+                xtype: 'label',
+                html: '<b>Test Cases not in a Folder</b>'
+            }]
 
         }
     ],
 
     launch: function() {
         var tree =  Ext.create('Rally.ui.tree.TestTree', {
+                        itemId: 'folderTree',
+                        height: 800,
+                        autoScroll: true,
                         config: {
                             displayedFields: [ 'Name', 'Project'],
                             topLevelModel: Ext.identityFn('TestFolder')
@@ -44,27 +55,45 @@ Ext.define('CustomApp', {
                                 }
 
                                 };
+                        },
+                        listeners: {
+                            drag: function(arg1, arg2, arg3) { console.log( 'drag', this.itemId, arg1, arg2); },
+                            drop: function(arg1, arg2, arg3) { console.log( 'drop', this.itemId, arg1, arg2); },
+                            recordsaved: function(record) {
+                                Ext.getCmp('caseTree').refresh();
+                            }
                         }
 
                      });
-Ext.util.Observable.capture( tree, function(event) {
-    console.log(event, arguments);
-});
 
         Ext.getCmp('folderbox').add(tree);
 
         var cases =  Ext.create('Rally.ui.tree.TestTree', {
+                        id: 'caseTree',
+                        height: 800,
+                        autoScroll: true,
                         config: {
                             displayedFields: [ 'Name', 'Project'],
                             topLevelModel: Ext.identityFn('TestCase'),
                             topLevelParentAttribute: 'TestFolder'
-                        }
+                        },
+                        topLevelStoreConfig: {
 
+                            fetch: [ 'FormattedID', 'Name' , 'TestFolder', 'Project'],
+                            sorters: [],
+                            context: {
+                                projectScopeUp: true,
+                                projectScopeDown: true
+                            }
+                        }
                     });
 
         Ext.getCmp('casebox').add(cases);
 
     }
+
+
+
 });
 
 Ext.define( 'testTreeItem', {
@@ -131,14 +160,9 @@ Ext.define('Rally.ui.tree.TestTree', {
 
     treeItemConfigForRecordFn: function(record){
         var config = {
-            selectable: true
+            selectable: true,
+            xtype: 'testTreeItem'
         };
-
-        if(this._isTestFolder(record)){
-            config.xtype = 'testTreeItem';
-        } else {
-            config.xtype = 'rallytreeitem';
-        }
 
         return config;
     },
@@ -230,7 +254,5 @@ Ext.define('Rally.ui.tree.TestTree', {
     _testFolderHasChildren: function(record){
         return (record.get('Children') && (record.get('Children').Count > 0));
     }
-
-
 });
 
