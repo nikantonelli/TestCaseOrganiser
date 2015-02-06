@@ -39,7 +39,7 @@
     launch: function() {
 
         var tree =  Ext.create('Rally.ui.tree.TestOrganiserTree', {
-                        itemId: 'folderTree',
+                        id: 'folderTree',
                         height: 800,
                         autoScroll: true,
                         config: {
@@ -83,6 +83,10 @@
 
         Ext.getCmp('folderbox').add(tree);
 
+Ext.util.Observable.capture( tree, function(event) {
+    console.log(tree.id, event, arguments);
+});
+
         var cases =  Ext.create('Rally.ui.tree.TestOrganiserTree', {
                         id: 'caseTree',
                         height: 800,
@@ -105,6 +109,11 @@
 
         Ext.getCmp('casebox').add(cases);
 
+Ext.util.Observable.capture( cases, function(event) {
+    console.log(cases.id, event, arguments);
+});
+
+
     }
 
 
@@ -124,7 +133,7 @@ Ext.define('Rally.ui.tree.TestFolderTreeItem', {
 
             return Ext.create('Ext.XTemplate',
                         '<tpl if="this.canDrag()"><div class="icon drag"></div></tpl>',
-                        '{[this.getActionsGear()]}',
+//                        '{[this.getActionsGear()]}',
                         '<div class="textContent ellipses">{[this.getFormattedId()]} - {Name} ({[this.getProject()]})</div>',
                         '<div class="rightSide">',
                             '{[this.getScheduleState(values)]}',
@@ -422,6 +431,7 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
                 return config;
             },
 
+
             /**
              * @cfg {Boolean}
              * Load the top level of the tree when rendered.
@@ -456,7 +466,20 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
              * @param record
              * @return {Array}
              */
-            actionsForRecordFn: null
+            actionsForRecordFn: null,
+//            actionsForRecordFn: function(record) {
+//                return [
+//                    {
+//                        xtype: 'rallyrecordmenuitemdelete',
+//                        handler: record.remove,    //Use the defaut method for now
+//                        record: record
+//                    }
+//                ];
+//            }
+            listeners: {
+                beforerecordsaved: function(source, target) { this.beforeRecordSaved(source, target); },
+//                recordsaved: function(record, listeners) { }
+            }
         },
 
         constructor: function(config){
@@ -680,6 +703,19 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
             Rally.ui.notify.Notifier.show({
                 message:message
             });
+        },
+
+        beforeRecordSaved: function(record, newParentRecord){
+            if (this._isTestFolder(record)){
+                //Change the project of the source to the same as the drop target
+                record.set('Project', newParentRecord.get('Project')._ref);
+            }
+            else if (this._isTestCase(record)){
+                record.set('Project', newParentRecord.get('Project')._ref);
+                record.set('TestFolder', newParentRecord.get('_ref'));
+            }
+
+
         },
 
         /**

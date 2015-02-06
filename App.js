@@ -30,7 +30,7 @@ Ext.define('CustomApp', {
     launch: function() {
 
         var tree =  Ext.create('Rally.ui.tree.TestOrganiserTree', {
-                        itemId: 'folderTree',
+                        id: 'folderTree',
                         height: 800,
                         autoScroll: true,
                         config: {
@@ -59,11 +59,11 @@ Ext.define('CustomApp', {
                                 };
                         },
                         listeners: {
-                            drag: function(arg1, arg2, arg3) { console.log( 'drag', this.itemId, arg1, arg2); },
-                            drop: function(arg1, arg2, arg3) {
-
-                                console.log( 'drop', this.itemId, arg1, arg2);
-                            },
+//                            drag: function(arg1, arg2, arg3) { console.log( 'drag', this.itemId, arg1, arg2); },
+//                            drop: function(arg1, arg2, arg3) {
+//
+//                                console.log( 'drop', this.itemId, arg1, arg2);
+//                            },
                             recordsaved: function(record) {
                                 this.refresh();
                                 Ext.getCmp('caseTree').refresh();
@@ -73,6 +73,10 @@ Ext.define('CustomApp', {
                      });
 
         Ext.getCmp('folderbox').add(tree);
+
+//Ext.util.Observable.capture( tree, function(event) {
+//    console.log(tree.id, event, arguments);
+//});
 
         var cases =  Ext.create('Rally.ui.tree.TestOrganiserTree', {
                         id: 'caseTree',
@@ -95,6 +99,11 @@ Ext.define('CustomApp', {
                     });
 
         Ext.getCmp('casebox').add(cases);
+
+//Ext.util.Observable.capture( cases, function(event) {
+//    console.log(cases.id, event, arguments);
+//});
+
 
     }
 
@@ -413,6 +422,7 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
                 return config;
             },
 
+
             /**
              * @cfg {Boolean}
              * Load the top level of the tree when rendered.
@@ -457,6 +467,10 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
 //                    }
 //                ];
 //            }
+            listeners: {
+                beforerecordsaved: function(source, target) { this.beforeRecordSaved(source, target); }
+//                recordsaved: function(record, listeners) { }
+            }
         },
 
         constructor: function(config){
@@ -680,6 +694,19 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
             Rally.ui.notify.Notifier.show({
                 message:message
             });
+        },
+
+        beforeRecordSaved: function(record, newParentRecord){
+            if (this._isTestFolder(record)){
+                //Change the project of the source to the same as the drop target
+                record.set('Project', newParentRecord.get('Project')._ref);
+            }
+            else if (this._isTestCase(record)){
+                record.set('Project', newParentRecord.get('Project')._ref);
+                record.set('TestFolder', newParentRecord.get('_ref'));
+            }
+
+
         },
 
         /**
