@@ -1,6 +1,8 @@
 Test Case Organiser
 ========================
 
+Drag and drop re-ordering of TestCases. Construct a TestFolder hierarchy
+
 ## Overview
 ![alt text](https://github.com/nikantonelli/TestCaseOrganiser/blob/master/doc/Untitled.png)
 
