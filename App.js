@@ -69,7 +69,7 @@ Ext.define('CustomApp', {
                                 Ext.getCmp('caseTree').refresh();
                             }
                         },
-                            scope: tree
+                        scope: tree
                      });
 
         Ext.getCmp('folderbox').add(tree);
@@ -124,7 +124,7 @@ Ext.define('Rally.ui.tree.TestFolderTreeItem', {
 
             return Ext.create('Ext.XTemplate',
                         '<tpl if="this.canDrag()"><div class="icon drag"></div></tpl>',
-//                        '{[this.getActionsGear()]}',
+                        '{[this.getActionsGear()]}',
                         '<div class="textContent ellipses">{[this.getFormattedId()]} - {Name} ({[this.getProject()]})</div>',
                         '<div class="rightSide">',
                             '{[this.getScheduleState(values)]}',
@@ -457,16 +457,35 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
              * @param record
              * @return {Array}
              */
-            actionsForRecordFn: null,
-//            actionsForRecordFn: function(record) {
-//                return [
-//                    {
-//                        xtype: 'rallyrecordmenuitemdelete',
-//                        handler: record.remove,    //Use the defaut method for now
-//                        record: record
-//                    }
-//                ];
-//            }
+//            actionsForRecordFn: null,
+            actionsForRecordFn: function(record) {
+
+                var items = [
+                        {
+                            xtype: 'rallyrecordmenuitemedit',
+                            record: record
+                        }
+                    ];
+
+                if ( record.get('_type') === 'testfolder')
+                {
+                    items.push([
+                        {
+                            xtype: 'rallyrecordmenuitemaddsubfolder',
+                            text: 'Add folder', //I have left it so the user has to add the parent. This is so we can create new toplevel folders
+                            record: record
+                        },
+                        {
+                            xtype: 'rallyrecordmenuitemaddtestcase',
+                            text: 'Add test case',
+                            record: record
+                        }
+                    ]);
+            },
+
+            _addSubFolder: function(record){
+            },
+
             listeners: {
                 beforerecordsaved: function(source, target) { this.beforeRecordSaved(source, target); }
 //                recordsaved: function(record, listeners) { }
@@ -1068,5 +1087,149 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
          * @private
          */
         initState: function(){}
+
+    });
+
+Ext.define('AddSubFolderMenuItem', {
+        extend:  Rally.ui.menu.item.RecordMenuItem ,
+        alias: 'widget.rallyrecordmenuitemaddsubfolder',
+
+        config: {
+            text: 'Add folder...',
+            cls: 'artifact-icon icon-story'
+            /**
+             * @cfg handler
+             */
+
+            /**
+             * @cfg predicate
+             */
+        },
+
+        constructor: function (config) {
+            config = config || {};
+            config.predicate = config.predicate || Rally.predicate.RecordPredicates.mustPassAllPredicates([
+                Rally.predicate.RecordPredicates.isUpdatable,
+                Rally.predicate.RecordPredicates.canHaveChildren
+            ]);
+            config.handler = config.handler || this._onAddChildClicked;
+
+            this.initConfig(config);
+            this.callParent(arguments);
+        },
+
+        _getChildType: function () {
+            var field = this.record.getField('Children');
+
+            return field.attributeDefinition.AllowedValueType._refObjectName;
+        },
+
+        _getCpoid: function (record) {
+            var project = record.get('Project') || {_ref: record.self.context.project};
+
+            return Rally.util.Ref.getOidFromRef(project._ref);
+        },
+
+        _onAddChildClicked: function () {
+            //This global check feels ALMy and probably shouldn't be here...
+            if (window.detail) {
+                window.detail.refreshContent = false;
+            }
+
+            var childType = this._getChildType(),
+                record = this.record,
+                params = this._buildParamsForEditor(record);
+
+            Rally.data.wsapi.ModelFactory.getModel({
+                type: childType,
+                context: record.self.context
+            }).then(function (ChildModel) {
+                    params.typeDef = ChildModel.typeDefOid;
+                    Rally.nav.Manager.create(childType, params);
+                });
+        },
+
+        _buildParamsForEditor: function (parent) {
+            var params = {
+                parent: parent.get('ObjectID'),
+                parentTypeDef: parent.self.typeDefOid,
+                cpoid: this._getCpoid(parent),
+                Parent: Rally.util.Ref.getOidFromRef(parent.get('_ref'))
+            };
+
+            return params;
+        }
+
+    });
+
+Ext.define('AddTestCaseMenuItem', {
+        extend:  Rally.ui.menu.item.RecordMenuItem ,
+        alias: 'widget.rallyrecordmenuitemaddtestcase',
+
+        config: {
+            text: 'Add testcase...',
+            cls: 'artifact-icon icon-story'
+            /**
+             * @cfg handler
+             */
+
+            /**
+             * @cfg predicate
+             */
+        },
+
+        constructor: function (config) {
+            config = config || {};
+            config.predicate = config.predicate || Rally.predicate.RecordPredicates.mustPassAllPredicates([
+                Rally.predicate.RecordPredicates.isUpdatable,
+                Rally.predicate.RecordPredicates.canHaveChildren
+            ]);
+            config.handler = config.handler || this._onAddChildClicked;
+
+            this.initConfig(config);
+            this.callParent(arguments);
+        },
+
+        _getChildType: function () {
+            var field = this.record.getField('TestCases');
+
+            return field.attributeDefinition.AllowedValueType._refObjectName;
+        },
+
+        _getCpoid: function (record) {
+            var project = record.get('Project') || {_ref: record.self.context.project};
+
+            return Rally.util.Ref.getOidFromRef(project._ref);
+        },
+
+        _onAddChildClicked: function () {
+            //This global check feels ALMy and probably shouldn't be here...
+            if (window.detail) {
+                window.detail.refreshContent = false;
+            }
+
+            var childType = this._getChildType(),
+                record = this.record,
+                params = this._buildParamsForEditor(record);
+
+            Rally.data.wsapi.ModelFactory.getModel({
+                type: childType,
+                context: record.self.context
+            }).then(function (ChildModel) {
+                    params.typeDef = ChildModel.typeDefOid;
+                    Rally.nav.Manager.create(childType, params);
+                });
+        },
+
+        _buildParamsForEditor: function (parent) {
+            var params = {
+                parent: parent.get('ObjectID'),
+                parentTypeDef: parent.self.typeDefOid,
+                cpoid: this._getCpoid(parent),
+                TestFolder: parent.get('_ref')
+            };
+
+            return params;
+        }
 
     });
