@@ -1,9 +1,5 @@
-<<<<<<< Updated upstream
 Test Case Organiser
-=======
-Test Caser Organiser
->>>>>>> Stashed changes
-=========================
+========================
 
 ## Overview
 
