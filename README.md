@@ -2,7 +2,7 @@ Test Case Organiser
 ========================
 
 ## Overview
-![alt text](https://github.com/nikantonelli/TestCaseOrganiser/blob/master/Doc/Untitled.png)
+![alt text](https://github.com/nikantonelli/TestCaseOrganiser/blob/master/doc/Untitled.png)
 
 ## License
 
