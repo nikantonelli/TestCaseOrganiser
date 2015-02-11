@@ -113,10 +113,10 @@ Ext.define('CustomApp', {
 
 Ext.define('Rally.ui.tree.TestFolderTreeItem', {
         extend:  Rally.ui.tree.TreeItem ,
-        alias: 'widget.testfoldertreeitem',
+        alias: 'widget.testtreeitem',
 
         config: {
-            displayedFields: ['Name', 'Parent']
+            displayedFields: ['Name', 'Project']
         },
 
         getContentTpl: function(){
@@ -148,43 +148,48 @@ Ext.define('Rally.ui.tree.TestFolderTreeItem', {
 
     });
 
-Ext.define('Rally.ui.tree.TestCaseTreeItem', {
-        extend:  Rally.ui.tree.TreeItem ,
-        alias: 'widget.testcasetreeitem',
-
-        config: {
-            displayedFields: ['Name', 'TestFolder']
-        },
-
-        getContentTpl: function(){
-            var me = this;
-
-            return Ext.create('Ext.XTemplate',
-                        '<tpl if="this.canDrag()"><div class="icon drag"></div></tpl>',
-                        '{[this.getActionsGear()]}',
-                        '<div class="textContent ellipses">{[this.getFormattedId()]} - {Name} ({[this.getProject()]})</div>',
-                        '<div class="rightSide">',
-                            '{[this.getScheduleState(values)]}',
-                        '</div>',
-                    {
-                        canDrag: function(){
-                            return me.getCanDrag();
-                        },
-                        getActionsGear: function(){
-                            return me._buildActionsGearHtml();
-                        },
-                        getProject: function(){
-                            return Rally.ui.renderer.RendererFactory.renderRecordField(me.getRecord(), 'Project');
-                        },
-                        getFormattedId: function(){
-                            return Rally.ui.renderer.RendererFactory.renderRecordField(me.getRecord(), 'FormattedID');
-                        }
-                    }
-            );
-        }
-
-    });
-
+//        _buildActionsGearHtml: function() {
+//            var hasPermissions = this.getRecord().get('creatable') || this.getRecord().get('updatable') || this.getRecord().get('deletable');
+//            return hasPermissions ? '<div class="row-action icon"></div>' : '';
+//        },
+//
+//Ext.define('Rally.ui.tree.TestCaseTreeItem', {
+//        extend:  Rally.ui.tree.TreeItem ,
+//        alias: 'widget.testcasetreeitem',
+//
+//        config: {
+//            displayedFields: ['Name', 'TestFolder']
+//        },
+//
+//        getContentTpl: function(){
+//            var me = this;
+//
+//            return Ext.create('Ext.XTemplate',
+//                        '<tpl if="this.canDrag()"><div class="icon drag"></div></tpl>',
+//                        '{[this.getActionsGear()]}',
+//                        '<div class="textContent ellipses">{[this.getFormattedId()]} - {Name} ({[this.getProject()]})</div>',
+//                        '<div class="rightSide">',
+//                            '{[this.getScheduleState(values)]}',
+//                        '</div>',
+//                    {
+//                        canDrag: function(){
+//                            return me.getCanDrag();
+//                        },
+//                        getActionsGear: function(){
+//                            return me._buildActionsGearHtml();
+//                        },
+//                        getProject: function(){
+//                            return Rally.ui.renderer.RendererFactory.renderRecordField(me.getRecord(), 'Project');
+//                        },
+//                        getFormattedId: function(){
+//                            return Rally.ui.renderer.RendererFactory.renderRecordField(me.getRecord(), 'FormattedID');
+//                        }
+//                    }
+//            );
+//        }
+//
+//    });
+//
 
  Ext.define('Rally.ui.tree.TestOrganiserTree', {
         extend:  Ext.Container ,
@@ -406,18 +411,16 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
              */
             treeItemConfigForRecordFn: function(record){
                 var config = {
-                    selectable: true
+                    selectable: true,
+                    xtype: 'testtreeitem'
                 };
 
                 if(record.get('_type') === 'testfolder'){
-                    config.xtype = 'testfoldertreeitem';
                     config.storeConfig = {
                         model: '',
                         models: ['testfolder', 'testcase']
                     };
-                } else {
-                    config.xtype = 'testcasetreeitem';
-                }
+                } 
 
                 return config;
             },
@@ -464,23 +467,38 @@ Ext.define('Rally.ui.tree.TestCaseTreeItem', {
                         {
                             xtype: 'rallyrecordmenuitemedit',
                             record: record
+                        },
+                        {
+                            xtype: 'rallyrecordmenuitemcopy',
+                            record: record
+                        },
+                        {
+                            xtype: 'rallyrecordmenuitemaddtoTS',
+                            text: 'Add to test set',
+                            record: record
                         }
                     ];
 
                 if ( record.get('_type') === 'testfolder')
                 {
-                    items.push([
+                    items.push(
                         {
                             xtype: 'rallyrecordmenuitemaddsubfolder',
                             text: 'Add folder', //I have left it so the user has to add the parent. This is so we can create new toplevel folders
                             record: record
-                        },
+                        });
+
+                    items.push(
+
                         {
                             xtype: 'rallyrecordmenuitemaddtestcase',
                             text: 'Add test case',
                             record: record
-                        }
-                    ]);
+                        });
+
+                }
+
+                return items;
             },
 
             _addSubFolder: function(record){
@@ -1096,7 +1114,7 @@ Ext.define('AddSubFolderMenuItem', {
 
         config: {
             text: 'Add folder...',
-            cls: 'artifact-icon icon-story'
+            cls: 'icon-folder'
             /**
              * @cfg handler
              */
@@ -1168,7 +1186,7 @@ Ext.define('AddTestCaseMenuItem', {
 
         config: {
             text: 'Add testcase...',
-            cls: 'artifact-icon icon-story'
+            cls: 'icon-test-case'
             /**
              * @cfg handler
              */
@@ -1230,6 +1248,105 @@ Ext.define('AddTestCaseMenuItem', {
             };
 
             return params;
+        }
+
+    });
+
+Ext.define('AddToTestSetMenuItem', {
+        extend:  Rally.ui.menu.item.RecordMenuItem ,
+        alias: 'widget.rallyrecordmenuitemaddtoTS',
+
+        config: {
+            text: 'Add to testset...',
+            cls: 'icon-test-set'
+            /**
+             * @cfg handler
+             */
+
+            /**
+             * @cfg predicate
+             */
+        },
+
+        constructor: function (config) {
+            config = config || {};
+            config.predicate = config.predicate || Rally.predicate.RecordPredicates.mustPassAllPredicates([
+                Rally.predicate.RecordPredicates.isUpdatable
+            ]);
+            config.handler = config.handler || this._onAddToTSClicked;
+
+            this.initConfig(config);
+            this.callParent(arguments);
+        },
+
+        // We will need to either add the single test case or add the contents of the folder to the test set
+        _getRecordType: function () {
+            return this.record.getField('_type');
+        },
+
+        _onAddToTSClicked: function () {
+
+            var self = this;
+
+            //This global check feels ALMy and probably shouldn't be here...
+            if (window.detail) {
+                window.detail.refreshContent = false;
+            }
+
+            var recordType = this._getRecordType();
+
+
+            var chooser = Ext.create('Rally.ui.dialog.SolrArtifactChooserDialog', {
+                artifactTypes: ['testset'],
+                autoShow: true,
+                title: 'Choose Test Set',
+                columns: ['FormattedID', 'Name', 'Iteration'],
+                listeners: {
+                    artifactchosen: function(dialog, selectedRecord){
+                        //We have the test set (selectedRecord) and the testitem (self)
+                        console.log(self, selectedRecord);
+                        //Get the full TestSet item in a store so we can modify it:
+                        var itemStore = Ext.create('Rally.data.wsapi.Store', {
+                            model: 'testset',
+                            autoLoad: true,
+                            fetch: [ 'FormattedID', 'TestCases'],
+                            filters: [
+                                {
+                                    property: 'FormattedID',
+                                    value: selectedRecord.get('FormattedID')
+                                }
+                            ],
+                            listeners: {
+                                load: function(store, records, success) {
+                                        var testcaseList = [];
+
+                                        //Get the collection of current test cases
+                                        tcCollection = records[0].getCollection('TestCases');
+
+                                        if (self.record.get('_type') === 'testcase'){
+                                            //Add the single test case to the test set
+                                            testcaseList.add(self.record);
+                                        }
+                                        else {
+                                        //Traverse the folder
+
+                                        }
+                                        tcCollection.load({
+                                            callback: function(){
+                                                _.each(testcaseList, function(testcase) {
+                                                    tcCollection.push(testcase);
+                                                });
+                                                tcCollection.sync();    //Might want to add a success check
+                                            }
+                                        });
+                                }
+                            }
+                        });
+
+                    },
+                    scope: this
+                }
+             });
         }
 
     });
