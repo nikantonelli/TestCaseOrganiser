@@ -1279,11 +1279,6 @@ Ext.define('AddToTestSetMenuItem', {
             this.callParent(arguments);
         },
 
-        // We will need to either add the single test case or add the contents of the folder to the test set
-        _getRecordType: function () {
-            return this.record.getField('_type');
-        },
-
         _onAddToTSClicked: function () {
 
             var self = this;
@@ -1292,9 +1287,6 @@ Ext.define('AddToTestSetMenuItem', {
             if (window.detail) {
                 window.detail.refreshContent = false;
             }
-
-            var recordType = this._getRecordType();
-
 
             var chooser = Ext.create('Rally.ui.dialog.SolrArtifactChooserDialog', {
                 artifactTypes: ['testset'],
@@ -1331,7 +1323,10 @@ Ext.define('AddToTestSetMenuItem', {
                                                     _.each(testcaseList, function(testcase) {
                                                         targetCollection.add(testcase);
                                                     });
-                                                    targetCollection.sync();    //Might want to add a success check
+                                                    targetCollection.sync({
+                                                        success: function() {Rally.ui.notify.Notifier.show({ message: 'Test Case added to Test Set'});},
+                                                        failure: function() {Rally.ui.notify.Notifier.show({ message: 'Failed to add Test Case to Test Set'});}
+                                                    });
                                                 }
                                             });
                                         }
@@ -1343,7 +1338,10 @@ Ext.define('AddToTestSetMenuItem', {
                                                     sourceCollection.load( {
                                                         callback: function(){
                                                             targetCollection.add(sourceCollection.getRecords());
-                                                            targetCollection.sync();
+                                                            targetCollection.sync({
+                                                                success: function() {Rally.ui.notify.Notifier.show({ message: 'Test Cases from Folder added to Test Set'});},
+                                                                failure: function() {Rally.ui.notify.Notifier.show({ message: 'Failed to add Test Cases to Test Set'});}
+                                                            });
                                                         }
                                                     });
                                                 }
