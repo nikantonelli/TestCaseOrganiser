@@ -1321,24 +1321,36 @@ Ext.define('AddToTestSetMenuItem', {
                                         var testcaseList = [];
 
                                         //Get the collection of current test cases
-                                        tcCollection = records[0].getCollection('TestCases');
+                                        targetCollection = records[0].getCollection('TestCases');
 
                                         if (self.record.get('_type') === 'testcase'){
                                             //Add the single test case to the test set
                                             testcaseList.add(self.record);
+                                            targetCollection.load({
+                                                callback: function(){
+                                                    _.each(testcaseList, function(testcase) {
+                                                        targetCollection.add(testcase);
+                                                    });
+                                                    targetCollection.sync();    //Might want to add a success check
+                                                }
+                                            });
                                         }
                                         else {
-                                        //Traverse the folder
+                                            //Add the contents of the folder
+                                            sourceCollection = self.record.getCollection('TestCases');
+                                            targetCollection.load({
+                                                callback: function(){
+                                                    sourceCollection.load( {
+                                                        callback: function(){
+                                                            targetCollection.add(sourceCollection.getRecords());
+                                                            targetCollection.sync();
+                                                        }
+                                                    });
+                                                }
+                                            });
+
 
                                         }
-                                        tcCollection.load({
-                                            callback: function(){
-                                                _.each(testcaseList, function(testcase) {
-                                                    tcCollection.push(testcase);
-                                                });
-                                                tcCollection.sync();    //Might want to add a success check
-                                            }
-                                        });
                                 }
                             }
                         });
