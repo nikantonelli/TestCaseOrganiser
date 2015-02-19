@@ -80,8 +80,7 @@ Ext.define('AddToTestSetMenuItem', {
                 //Do this folder's direct TestCases
                 self._addTestCasesForTestFolder(source, tcList);
 
-                },
-                failure: function(error, result) { debugger; }
+                }
             });
 
         },

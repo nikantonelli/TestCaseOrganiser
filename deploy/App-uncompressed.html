@@ -422,7 +422,8 @@ Ext.define('CustomApp', {
                                 },
                                 //Our own synchronisation event from the testcase loading
                                 syncTarget: function(testcaseList) {
-                                    //Need to refetch the context of the store
+
+                                    //Need to refetch the context of the store as we are part of 'window' as we come in
                                     var store = Ext.data.StoreManager.lookup('wsStore');
 
                                     _.each(testcaseList, function(testcase) {
@@ -437,53 +438,6 @@ Ext.define('CustomApp', {
                                         }
                                     });
 
-                                    debugger;
-
-
-
-
-//                                            sourceCollection = self.record.getCollection('TestCases');
-//                                            targetCollection.load({
-//                                                callback: function(){
-//                                                    sourceCollection.load( {
-//                                                        callback: function(){
-//                                                            targetCollection.add(sourceCollection.getRecords());
-//                                                            targetCollection.sync({
-//                                                                success: function() {Rally.ui.notify.Notifier.show({ message: 'Test Cases from Folder added to Test Set'});},
-//                                                                failure: function() {Rally.ui.notify.Notifier.show({ message: 'Failed to add Test Cases to Test Set'});}
-//                                                            });
-//                                                        }
-//                                                    });
-//                                                }
-//                                            });
-//
-
-
-//    Don't have testsets in LBAPI yet       var tcStore = Ext.create('Rally.data.lookback.SnapshotStore', {
-//                                                autoLoad: true,
-//                                                storeId: 'tcStore',
-//                                                fetch: ['FormattedID'],
-//                                                hydrate: ['FormattedID'],
-//                                                filters: [
-//                                                    {
-//                                                        property: '_ItemHierarchy',
-//                                                        value: Rally.util.Ref.getOidFromRef(  self.record.get('_ref'))
-//                                                    },
-//                                                    {
-//                                                        property: '_TypeHierarchy',
-//                                                        value: 'TestCase'
-//                                                    },
-//                                                    {
-//                                                        property: "__At",
-//                                                        value: "current"
-//                                                    }
-//                                                ],
-//                                                listeners: {
-//                                                    load: function(store, data, success) {
-//                                                        debugger;
-//                                                    }
-//                                                }
-//                                            });
                                         }
                                 }
                         });
