@@ -108,6 +108,7 @@ Ext.define('AddToTestSetMenuItem', {
 
                         var itemStore = Ext.create('Rally.data.wsapi.Store', {
                             model: 'testset',
+                            limit: Infinity,
                             autoLoad: true,
                             storeId: 'wsStore', //Log the store with the store manager for later retrieval
                             targetCollection: null,
@@ -156,8 +157,17 @@ Ext.define('AddToTestSetMenuItem', {
                                     //Need to refetch the context of the store as we are part of 'window' as we come in
                                     var store = Ext.data.StoreManager.lookup('wsStore');
 
+                                    //The sync is limited to 25 records at a time
+                                    var syncCount = 0;
+
                                     _.each(testcaseList, function(testcase) {
+                                        syncCount += 1;
                                         store.targetCollection.add(testcase);
+
+                                        if (syncCount === 25) {
+                                            store.targetCollection.sync();  //Just fire one off and hope it works.
+                                            syncCount = 0;
+                                        }
                                     });
                                     store.targetCollection.sync({
                                         success: function() {

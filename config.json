@@ -9,7 +9,8 @@
       "Menu/AddSubFolderMenuItem.js",
       "Menu/AddToTestSetMenuItem.js",
       "Tree/TestCaseTree.js",
-      "Tree/TestTreeItem.js"
+      "Tree/TestTreeItem.js",
+      "Proxy/BatchProxy.js"
    ],
    "css": [
       "app.css"
