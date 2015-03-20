@@ -6,13 +6,14 @@ Ext.define('CustomApp', {
     componentCls: 'app',
     layout: 'hbox',
     align: 'stretch',
-    margin: 10,
     autoscroll: false,
 
     items:[
         {
             xtype: 'container',
             id: 'folderbox',
+            margin: 10,
+            flex: 1,
             items: [{
                 xtype: 'label',
                 html: '<b> Test Folder Hierarchy </b>'
@@ -21,17 +22,69 @@ Ext.define('CustomApp', {
         },
         {
             xtype: 'container',
+            margin: 10,
             id: 'casebox',
-            flex: 2,
+            flex: 1,
             items: [{
                 xtype: 'label',
                 html: '<b>Test Cases not in a Folder</b>'
             }]
 
+        },
+        {
+            xtype: 'container',
+            margin: 10,
+            id: 'setbox',
+            flex: 1,
+            items: [{
+                xtype: 'label',
+                html: '<b>Test Sets</b>'
+            }]
+
         }
     ],
 
+    _onIterationsLoaded: function() {
+    },
+
+    _onIterationChanged: function() {
+    },
+
+    _onStoreBuilt: function(store) {
+
+    //Set up the iteration selection box for the TestSet selection
+        Ext.getCmp('setbox').add({
+            xtype: 'rallygridboard',
+            context: this.getContext(),
+            modelNames: ['testset'],
+            toggleState: 'grid',
+            gridConfig: {
+                store: store,
+                columnCfgs: [
+                    'Project',
+                    'Iteration',
+                    'Release',
+                    'TestCaseCount'
+                ]
+            },
+            height: 800
+        });
+    },
+
     launch: function() {
+
+        var app = this;
+
+
+        Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
+                        models: ['testset'],
+                        autoLoad: true,
+                        enableHierarchy: true,
+                        fetch: [ 'FormattedId', 'Release', 'TestCaseCount']
+                    }).then({
+                        success: this._onStoreBuilt,
+                        scope: this
+                    });
 
         //I'm going to use State, so call the initialise....
         Rally.state.SessionStorage.initialize( 'testcaseorganiser');

@@ -111,6 +111,7 @@ Ext.define('AddToTestSetMenuItem', {
                             limit: Infinity,
                             autoLoad: true,
                             storeId: 'wsStore', //Log the store with the store manager for later retrieval
+                            batchAction: true,
                             targetCollection: null,
                             fetch: [ 'FormattedID', 'TestCases'],
                             filters: [
@@ -136,7 +137,7 @@ Ext.define('AddToTestSetMenuItem', {
                                                     });
                                                     this.targetCollection.sync({
                                                         success: function() {Rally.ui.notify.Notifier.show({ message: 'Test Case added to Test Set'});},
-                                                        failure: function() {Rally.ui.notify.Notifier.show({ message: 'Failed to add Test Case to Test Set'});}
+                                                        failure: function() {Rally.ui.notify.Notifier.showError({ message: 'Failed to add Test Case to Test Set'});}
                                                     });
                                                 }
                                             });
@@ -157,24 +158,19 @@ Ext.define('AddToTestSetMenuItem', {
                                     //Need to refetch the context of the store as we are part of 'window' as we come in
                                     var store = Ext.data.StoreManager.lookup('wsStore');
 
-                                    //The sync is limited to 25 records at a time
+                                    //The sync is limited to 25 records at a time so use batchAction on wsStore
                                     var syncCount = 0;
 
                                     _.each(testcaseList, function(testcase) {
-                                        syncCount += 1;
                                         store.targetCollection.add(testcase);
-
-                                        if (syncCount === 25) {
-                                            store.targetCollection.sync();  //Just fire one off and hope it works.
-                                            syncCount = 0;
-                                        }
                                     });
+
                                     store.targetCollection.sync({
                                         success: function() {
                                             Rally.ui.notify.Notifier.show({ message: testcaseList.length + ' Test Cases added to Test Set'});
                                         },
                                         failure: function() {
-                                            Rally.ui.notify.Notifier.show({ message: 'Failed to add Test Cases to Test Set'});
+                                            Rally.ui.notify.Notifier.showError({ message: 'Failed to add Test Cases to Test Set'});
                                         }
                                     });
 
