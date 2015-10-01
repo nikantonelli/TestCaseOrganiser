@@ -544,6 +544,7 @@
         if (this._isTestFolder(record)){
             //Change the project of the source to the same as the drop target
             record.set('Project', newParentRecord.get('Project')._ref);
+            record.set('Parent', newParentRecord.get('Parent')._ref);
         }
         else if (this._isTestCase(record)){
             record.set('Project', newParentRecord.get('Project')._ref);
